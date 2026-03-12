@@ -219,3 +219,49 @@ Created `REQUIREMENTS_REFINED_1.md` with:
 - 10 new requirements added (FR-13 through FR-22)
 - Section 5 out-of-scope table updated with "Measured By" column
 - Section 7 (new): change-log table documenting all 14 changes
+
+---
+
+## Exchange 13
+
+### User
+> Let's not worry about the session names, then. Let's get back to the refactor work. Based on the contents of PLAN_INITIAL.md and REQUIREMENTS_REFINED_1.md, create a new file named PLAN_REVISED_1.md that outlines the steps you would take to implement the pre-refactor measurement, the system refactor, and the post-refactor measurement. Your plan should include specifics about how to conduct the software builds, the tooling and commands needed to capture the needed metrics, the order in which you would proceed, and any other relevant details that you discover. It is important that each step/phase of the plan is capable of being conducted independently. That is, steps/phases can be completed one at a time, not all at once, with relevant documentation created at the end of each phase for informative use by the next phase, if necessary.
+
+### Assistant
+Created `PLAN_REVISED_1.md` — a fully detailed, phase-independent execution plan with 5 phases:
+
+- **Phase 0** (Environment Setup): Tool verification, PMD plugin addition to pom.xml, pre-flight build checks. Output: `measurements/phase_00_environment.md`.
+- **Phase 1** (Pre-Refactor Measurement): 10 ordered steps collecting all metrics required by FR-13–FR-22. Steps 1.1 and 1.2 run together (mvn test captures both FR-18 test time and FR-13 JaCoCo coverage). Output: `measurements/phase_01_baseline.md`.
+- **Phase 2** (System Refactor): 12 ordered sub-steps — create FizzBuzz.java (full source included), rewrite test files (full source included), delete old production source tree, update pom.xml and build.gradle (exact diffs specified), compile verification, test verification, Gradle verification, JAR spot-check, commit. Output: `measurements/phase_02_refactor_log.md`.
+- **Phase 3** (Post-Refactor Measurement): Same 10 measurement steps as Phase 1 with noted adjustments (e.g., resources/ no longer exists for cloc). Output: `measurements/phase_03_postrefactor.md`.
+- **Phase 4** (Analysis): Comparison table population, trade-off documentation. Output: `measurements/phase_04_comparison.md` and `docs/refactor_tradeoffs.md`.
+
+Plan includes:
+- Phase entry conditions for independent executability
+- Exit verification checklists for each phase
+- Appendix A: document templates for both the environment record and the measurement record
+- Appendix B: comparison table template for Phase 4
+
+---
+
+## Exchange 12
+
+### User
+*(Session resumed.)* Confirmed that `REQUIREMENTS_INITIAL.md` has been annotated with `(DY):` prefix paragraphs. Requested creation of `REQUIREMENTS_REFINED_1.md` incorporating all annotations, plus a final change-log table with columns: requirement ID, original requirement, annotated feedback, rewritten requirement.
+
+### Assistant
+Read `REQUIREMENTS_INITIAL.md` in full. Identified 5 annotation points:
+1. **FR-11**: N=100 not testable (max testable N=16); requirement rewritten
+2. **SR-02**: Two annotations — remove state prohibition (allows memoization); remove duplicate determinism language (already in SR-06); retain only final sentence
+3. **NFR-03**: "may" → "shall" for Java 7 cutoff
+4. **NFR-07**: Missing functional requirement for test coverage equivalence; FR-13 added
+5. **NFR-10 (trailing)**: Add functional requirements for all empirical metrics; FR-14 through FR-22 added (LOC, class/interface counts, cyclomatic complexity, build time, test time, package depth, runtime dep count, public method count, DI annotation count)
+
+Two consequential updates made (not directly annotated): AS-06 updated to remove N=100 reference; V-03 updated to match revised FR-11 scope.
+
+Created `REQUIREMENTS_REFINED_1.md` with:
+- All unchanged requirements preserved verbatim
+- 5 annotation-driven revisions applied
+- 10 new requirements added (FR-13 through FR-22)
+- Section 5 out-of-scope table updated with "Measured By" column
+- Section 7 (new): change-log table documenting all 14 changes
