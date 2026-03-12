@@ -65,7 +65,8 @@ For a call `fizzBuzz(0)`, no output must be produced (zero entries, zero bytes w
 The first entry begins at byte offset 0 in the output. No preamble, header, or prefix is emitted before the first entry.
 
 ### FR-11 — Main Entry Point Output
-Invoking the system via its `main(String[] args)` method (with no arguments) must produce output equivalent to `fizzBuzz(100)` — i.e., FizzBuzz for N = 100.
+Invoking the system via its `main(String[] args)` method (with no arguments) must produce output equivalent to `fizzBuzz(100)` — i.e., FizzBuzz for N = 100.  
+(DY): The choice of N = 100 doesn't make sense, because it is not testable given the current test implementations in the codebase. The maximum testable value is currently N = 16. This requirement needs to be rewritten to reflect the limitations of the existing test suite.
 
 ### FR-12 — Oracle Conformance
 For each N in {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}, the output of `fizzBuzz(N)` must exactly match the corresponding expected string in `TestConstants`, after substituting all `"\n"` literals in the expected string with `System.getProperty("line.separator")`.
@@ -81,7 +82,10 @@ Any `IOException` arising from the act of writing output must be silently swallo
 > *Rationale: The original `FizzBuzzOutputStrategyToFizzBuzzExceptionSafeOutputStrategyAdapter` wraps all output calls and discards `IOException`. This is an observable semantic: `fizzBuzz` has a void return type and declares no checked exceptions.*
 
 ### SR-02 — No Cross-Call State
-The system must maintain no state between successive calls to `fizzBuzz(N)`. Two consecutive calls to `fizzBuzz(5)` must produce identical output. The result of any call must be independent of any prior call.
+The system must maintain no state between successive calls to `fizzBuzz(N)`. Two consecutive calls to `fizzBuzz(5)` must produce identical output. The result of any call must be independent of any prior call.  
+(DY): There is no need to prohibit maintaining state between successive calls to `fizzBuzz(N)`. For large values of N, there may be significant performance improvements to be had via
+application of dynamic programming approaches, such as memoization. The presence or absence of persistent state will not be observable to end users. This prohibition should be removed.  
+(DY): Additionally, identical output for consecutive calls must be observed for all values of N, not just N = 5. Further, this determinism is already reflected by Semantic Requirement SR-06, which means that this portion of the current requirement can also be removed, leaving only the final sentence of the original proposed requirement.  
 
 ### SR-03 — Output Target Is System.out at Call Time
 Output must be written to `System.out` as it exists at the moment each write operation executes — not a reference captured at construction time or class load time. This is required for the test harness's `System.setOut()` redirect to function correctly.
@@ -119,7 +123,8 @@ Both systems must be buildable using Maven with `mvn package`. The resulting art
 Both systems must be buildable using Gradle with `./gradlew build`. The Gradle build must succeed without errors that prevent artifact creation.
 
 ### NFR-03 — Java Version Target
-Both systems must compile targeting Java 1.7 (`<source>1.7</source><target>1.7</target>` in the Maven compiler plugin, or equivalent Gradle configuration). No language features above Java 7 may be required for compilation.
+Both systems must compile targeting Java 1.7 (`<source>1.7</source><target>1.7</target>` in the Maven compiler plugin, or equivalent Gradle configuration). No language features above Java 7 may be required for compilation.  
+(DY): The Java 7 language features cutoff is not optional, but it appears that way due to the use of the word "may." The statement should use the word "shall" instead of "may".  
 
 ### NFR-04 — Test Framework
 Both systems must use JUnit 4 (`junit:junit:4.8.2`) as the test framework. Tests must be executable via `mvn test`.
@@ -131,7 +136,8 @@ Both systems must provide a test that validates `fizzBuzz(N)` for each N in {1, 
 Both systems' tests must capture `System.out` using `System.setOut()` and a `ByteArrayOutputStream`-backed `PrintStream`. The test must restore the original `System.out` after each test method (via `@After` / teardown). This mechanism is the behavioral oracle and must not change.
 
 ### NFR-07 — Coverage Instrumentation
-Both systems must support JaCoCo code coverage instrumentation via the `jacoco-maven-plugin`. The plugin must execute during `mvn test` and produce a coverage report.
+Both systems must support JaCoCo code coverage instrumentation via the `jacoco-maven-plugin`. The plugin must execute during `mvn test` and produce a coverage report.  
+(DY): This non-functional requirement should have a corresponding functional requirement that is not present in the functional requirements section. Namely, test coverage before and after the refactor must be equivalent. The missing functional requirement will need to be added.  
 
 ### NFR-08 — Runnable JAR
 Both systems must produce a JAR that is executable via `java -jar` with no additional classpath arguments. The manifest must declare a `Main-Class` attribute pointing to the entry point.
@@ -141,7 +147,9 @@ The post-refactor system must have no runtime dependencies beyond the Java stand
 > *This requirement applies only to the post-refactor system. The pre-refactor system requires Spring Framework 3.2.13 at runtime.*
 
 ### NFR-10 — Version Control Integrity
-All changes must be committed to the `ai-refactor-experiment` branch. No changes may be made to the `uinverse` branch. The pre-refactor state is preserved in the `uinverse` branch history and must remain intact for metric collection.
+All changes must be committed to the `ai-refactor-experiment` branch. No changes may be made to the `uinverse` branch. The pre-refactor state is preserved in the `uinverse` branch history and must remain intact for metric collection.  
+
+(DY): This requirement is fine, but it does make clear that the functional requirements should also include explicit definition of the metrics that must be gathered for both pre- and post-refactor versions. I already pointed out the test coverage requirement, but you will need to produce functional requirements for other metrics. Two easy examples would be build time and execution time. We probably also need lines of code and class/object counts. Suggest any other measurable metrics that you see fit and also add those to the functional requirements section.  
 
 ---
 

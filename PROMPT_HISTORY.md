@@ -195,3 +195,27 @@ Confirmed understanding of the annotation workflow:
 - On session resume, user will prompt a read of the file; assistant will then process all `(DY):` annotations and revise requirements accordingly
 
 Session paused pending user annotations.
+
+---
+
+## Exchange 12
+
+### User
+*(Session resumed.)* Confirmed that `REQUIREMENTS_INITIAL.md` has been annotated with `(DY):` prefix paragraphs. Requested creation of `REQUIREMENTS_REFINED_1.md` incorporating all annotations, plus a final change-log table with columns: requirement ID, original requirement, annotated feedback, rewritten requirement.
+
+### Assistant
+Read `REQUIREMENTS_INITIAL.md` in full. Identified 5 annotation points:
+1. **FR-11**: N=100 not testable (max testable N=16); requirement rewritten
+2. **SR-02**: Two annotations — remove state prohibition (allows memoization); remove duplicate determinism language (already in SR-06); retain only final sentence
+3. **NFR-03**: "may" → "shall" for Java 7 cutoff
+4. **NFR-07**: Missing functional requirement for test coverage equivalence; FR-13 added
+5. **NFR-10 (trailing)**: Add functional requirements for all empirical metrics; FR-14 through FR-22 added (LOC, class/interface counts, cyclomatic complexity, build time, test time, package depth, runtime dep count, public method count, DI annotation count)
+
+Two consequential updates made (not directly annotated): AS-06 updated to remove N=100 reference; V-03 updated to match revised FR-11 scope.
+
+Created `REQUIREMENTS_REFINED_1.md` with:
+- All unchanged requirements preserved verbatim
+- 5 annotation-driven revisions applied
+- 10 new requirements added (FR-13 through FR-22)
+- Section 5 out-of-scope table updated with "Measured By" column
+- Section 7 (new): change-log table documenting all 14 changes
