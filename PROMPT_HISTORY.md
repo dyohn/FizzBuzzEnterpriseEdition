@@ -244,24 +244,80 @@ Plan includes:
 
 ---
 
-## Exchange 12
+## Exchange 14
 
 ### User
-*(Session resumed.)* Confirmed that `REQUIREMENTS_INITIAL.md` has been annotated with `(DY):` prefix paragraphs. Requested creation of `REQUIREMENTS_REFINED_1.md` incorporating all annotations, plus a final change-log table with columns: requirement ID, original requirement, annotated feedback, rewritten requirement.
+> Let's change topics for a little while. As part of the planning process, I want to generate some visual aids. Specifically, I would like the following:
+> * UML class diagrams that describe the system architecture
+> * Use case statements and diagrams that describe how the system will be used
+> * Sequence diagrams that describe the control and data flow through the system.
+>
+> Each type of diagram needs to be created for both the existing system and the proposed refactored system. While it is fine to provide textual versions of some of the visual aids (e.g., use case statements), the strong preference is for true visual graphs. In particular, code-like formats like Mermaid should be leveraged to create the requested diagrams. When code-like formats or software diagram tooling is used, both the backing code and the rendered diagrams should be provided. You should use `REQUIREMENTS_REFINED_1.md` and `PLAN_REVISED_1.md` as your primary sources for context, supported by the remainder of the code repository. All of the generated diagrams and information should be written to a file named `VISUAL_AIDS_INITIAL.md`. You may begin.
 
 ### Assistant
-Read `REQUIREMENTS_INITIAL.md` in full. Identified 5 annotation points:
-1. **FR-11**: N=100 not testable (max testable N=16); requirement rewritten
-2. **SR-02**: Two annotations — remove state prohibition (allows memoization); remove duplicate determinism language (already in SR-06); retain only final sentence
-3. **NFR-03**: "may" → "shall" for Java 7 cutoff
-4. **NFR-07**: Missing functional requirement for test coverage equivalence; FR-13 added
-5. **NFR-10 (trailing)**: Add functional requirements for all empirical metrics; FR-14 through FR-22 added (LOC, class/interface counts, cyclomatic complexity, build time, test time, package depth, runtime dep count, public method count, DI annotation count)
+Read several source files to verify diagram accuracy:
+- `SingleStepOutputGenerationStrategy.java` — confirmed 3 contexts (Fizz, Buzz, NoFizzNoBuzz) + newLinePrinter
+- `LoopRunner.java` — for-loop using `start()`, `shouldProceed()`, `proceed()` state machine
+- `LoopContext.java` — **critical discovery**: creates a *second* `ClassPathXmlApplicationContext` internally to retrieve `LoopComponentFactory`, then immediately closes it (Service Locator anti-pattern inside a DI-managed object)
+- `FizzStringPrinter.java`, `NumberIsMultipleOfAnotherNumberVerifier.java`, `IntegerIntegerPrinter.java`, `StringPrinter.java` — confirmed printer hierarchy and output chain
 
-Two consequential updates made (not directly annotated): AS-06 updated to remove N=100 reference; V-03 updated to match revised FR-11 scope.
+Created `VISUAL_AIDS_INITIAL.md` containing:
 
-Created `REQUIREMENTS_REFINED_1.md` with:
-- All unchanged requirements preserved verbatim
-- 5 annotation-driven revisions applied
-- 10 new requirements added (FR-13 through FR-22)
-- Section 5 out-of-scope table updated with "Measured By" column
-- Section 7 (new): change-log table documenting all 14 changes
+**Pre-refactor diagrams:**
+- **UML Class Diagram 1 (Architecture Overview)**: Mermaid `classDiagram` with 10 labeled layers (Entry → Solution Strategy → Loop → Payload/Adapter → Output Generation → Visitor → Divisibility Strategies → Printers → Math → Output Channel), ~35 nodes. Note: ⚠ `LoopContext` creates second Spring context; 15 factories omitted for clarity.
+- **UML Class Diagram 2 (Printer & Output Chain Detail)**: Mermaid `classDiagram` showing `StringPrinter extends DataPrinter`, `IntegerPrinter extends DataPrinter`, all 4 string returners, and `FizzBuzzOutputStrategyToFizzBuzzExceptionSafeOutputStrategyAdapter` wrapping `SystemOutFizzBuzzOutputStrategy`.
+- **Use Case Inventory** (UC-01 through UC-04): textual table + Mermaid `graph TB` use case diagram with actors (User, Developer, TestHarness). UC-04 = "Add new FizzBuzz rule without modifying existing code" — enabled by Strategy+Factory+Visitor.
+- **Sequence Diagram 1 (Full Execution Flow)**: Mermaid `sequenceDiagram` tracing `main()` → Spring context #1 → `StandardFizzBuzz` → `EnterpriseGradeFizzBuzzSolutionStrategy` → `LoopContext` (opens Spring context #2, gets factory, closes #2) → `LoopRunner` → loop → `SingleStepPayload` → visitor → divisibility check → `System.out.write()` + `flush()`.
+- **Sequence Diagram 2 (Per-Iteration Detail, i=15)**: FizzCtx fires (prints "Fizz"), BuzzCtx fires (prints "Buzz"), NoFizzNoBuzzCtx does not fire; net output: `"FizzBuzz\n"`.
+
+**Post-refactor diagrams:**
+- **UML Class Diagram**: Single `FizzBuzz` class with `main(String[])` and `fizzBuzz(int n)` static methods, private constructor.
+- **Use Case Diagram**: UC-01, UC-02, UC-03 retained; UC-04 removed (no longer extensible without code modification).
+- **Sequence Diagram 1 (Full Execution Flow)**: 3 participants; `main()` → `fizzBuzz(100)` → for-loop → if/else if → `System.out.write()` + `flush()`.
+- **Sequence Diagram 2 (Per-Iteration Detail, i=15)**: Single participant, 4 steps total; note: "4 steps vs. ~30 in pre-refactor".
+
+**Comparison section:**
+- Structural contrast flowchart (pre: 10 layers, post: 4 steps)
+- Pattern inventory table (8+ patterns → 0)
+- Call depth comparison graph (~14 frames → 3 frames)
+
+---
+
+## Exchange 15
+
+### User
+> Let's deal with some revisions to the diagrams that you just generated. Inside the VISUAL_AIDS_INITIAL.md file, I placed some correction/suggestion annotations; they are prefixed with the "(DY): " string just like before. I want you to reexamine that file and refine things based on my feedback. Additionally, I want you to keep track of any requirements (from the REQUIREMENTS_REFINED_1.md file) that are not represented in the refined diagrams in some way; a listing of those unrepresented requirements should be generated. All of the information you generate should be written into a new file named VISUAL_AIDS_REFINED_1.md. You may begin.
+
+### Assistant
+Read `VISUAL_AIDS_INITIAL.md` in full; identified 4 `(DY):` annotations:
+1. **§1.1.1** — Architecture Overview is dense; add per-layer class diagrams.
+2. **§1.2.2** — Developer and Test Harness actors rendering inside/adjacent to System Boundary make the graph excessively wide; move them above the boundary, to the right of User/Operator.
+3. **§2.3.2** — `Note over FB,SysOut` statement clips outside its rectangle; fix it.
+4. **§3.3** — No requirement traceability in any diagram; add it.
+
+Read `REQUIREMENTS_REFINED_1.md` in full for traceability analysis.
+
+Created `VISUAL_AIDS_REFINED_1.md` containing:
+
+**Section 1 — Pre-Refactor System:**
+- §1.1.1: Architecture Overview retained (22 Diagram IDs assigned across all sections).
+- §1.1.2 (NEW): 10 per-layer class diagrams (Layers 1–10), each showing that layer's classes in full detail, with cross-layer references shown as abbreviated `<<Layer N>>` stereotypes. Requirement annotations (`FR-xx`, `SR-xx`) added as notes where the layer's behavior satisfies specific requirements.
+- §1.1.3: Printer & Output Chain Detail retained.
+- §1.2.2: Use case diagram fixed — added `User ~~~ Dev ~~~ QA` invisible edges to force actors into a horizontal row above the System Boundary subgraph.
+- §1.3.1 and §1.3.2: Sequence diagrams retained; `Note` annotations added referencing FR-01, FR-02, FR-03–06, FR-07, FR-08, SR-01, SR-03, SR-04, SR-08.
+
+**Section 2 — Post-Refactor System:**
+- §2.2.2: Same actor-positioning fix applied.
+- §2.3.1: Requirement annotations added (FR-11, FR-01–FR-08, SR-03, SR-04, SR-09).
+- §2.3.2: Long `Note over` split into two shorter notes to eliminate clipping.
+
+**Section 3 — Architectural Comparison:** Retained with added requirement cross-references in prose notes (FR-15, FR-16, FR-19, FR-20, FR-22).
+
+**Section 4 (NEW) — Requirements Traceability Matrix:** 22-diagram legend + three tables (Functional Requirements, Semantic Requirements, Non-Functional Requirements), each row listing Req. ID, brief description, representing diagram IDs, and coverage status (Full / Partial / None).
+
+**Section 5 (NEW) — Unrepresented Requirements:** 3 sub-sections:
+- 5.1 Measurement/Process Requirements (FR-13, FR-14, FR-16, FR-17, FR-18, FR-21) — numeric outcomes, not structural properties.
+- 5.2 Behavioral Invariants / Absence Constraints (FR-09, FR-10, SR-02, SR-05, SR-06) — what the system must not do; not expressible in structural/flow diagrams.
+- 5.3 Implementation/Configuration Requirements (SR-09, NFR-01, NFR-02, NFR-03, NFR-06, NFR-07, NFR-10) — build tooling, compiler flags, VCS process.
+
+**Section 6 (NEW) — Change Log:** 9-row table documenting every change from VISUAL_AIDS_INITIAL, with the DY annotation that motivated each change.
