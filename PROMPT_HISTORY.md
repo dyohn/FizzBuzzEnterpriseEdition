@@ -321,3 +321,48 @@ Created `VISUAL_AIDS_REFINED_1.md` containing:
 - 5.3 Implementation/Configuration Requirements (SR-09, NFR-01, NFR-02, NFR-03, NFR-06, NFR-07, NFR-10) — build tooling, compiler flags, VCS process.
 
 **Section 6 (NEW) — Change Log:** 9-row table documenting every change from VISUAL_AIDS_INITIAL, with the DY annotation that motivated each change.
+
+---
+
+## Exchange 16
+
+### User
+> We already have requirements specified, but I also need to have a validation and metrics strategy for this experiment. Unit tests are going to be generated or adjusted as part of the refactor, but I also need a way to verify that the requirements (defined in REQUIREMENTS_REFINED_1.md) are met by the refactored code. The metrics will be gathered for the pre- and post-refactor codebases. For metrics, I was thinking about using build time, cyclomatic complexity, and test coverage. Create a testing and metrics plan incorporating the needs and suggestions I just described, plus any suggestions that you can provide that will enhance the empirical value of my experiment. This is just an initial plan that we will iterate on until satisfied. Write your plan to a new file named TEST_METRICS_INITIAL.md.
+
+### Assistant
+Read all requirements in `REQUIREMENTS_REFINED_1.md` (FR-01 through FR-22, SR-01 through SR-09, NFR-01 through NFR-10) to inform both the validation strategy and the identification of gaps in existing test coverage.
+
+Created `TEST_METRICS_INITIAL.md` containing:
+
+**Section 2 — Requirements Validation Matrix:** Defined a verification method taxonomy (JUnit-E, JUnit-N, Build, Static, Measure, Manual) and mapped all 31 requirements to one or more methods, identifying which are covered by existing oracle tests and which require new test methods or manual inspection.
+
+**Section 3 — Unit Testing Plan:** Documented 10 new test methods (T-01 through T-10) with pseudocode:
+- T-01: N=0 produces zero bytes (FR-09 — not covered by existing tests)
+- T-02: Explicit output cardinality assertion (FR-01)
+- T-03: No preamble and no trailing content (FR-07, FR-10)
+- T-04: Platform line separator verified via System property override (FR-08)
+- T-05: Call independence — byte-identical output across three consecutive calls (SR-02, SR-06)
+- T-06: No exception propagation for N in {0,1,3,5,15,16,100} (SR-07)
+- T-07: IOException suppression — redirect System.out to a throwing OutputStream; verify no exception escapes (SR-01)
+- T-08: Per-entry flush count — count flush() calls via a wrapping PrintStream; assert ≥ N (SR-04)
+- T-09: Exhaustive arithmetic correctness for i=1..100 against modulo rules (FR-03–FR-06, SR-08)
+- T-10: System.err silence — capture and assert empty (SR-05)
+
+**Section 4 — Metrics Collection Plan:**
+- Required metrics (FR-13–FR-22) with exact shell commands for each
+- 6 proposed additional metrics to enhance empirical value:
+  - M-A: JAR artifact size (bytes) — quantifies dependency removal in deployed artifact
+  - M-B: Application startup + execution time via `time java -jar` — captures Spring bootstrap overhead, which FR-17/FR-18 do not
+  - M-C: Peak heap usage via JVM GC logging — measures Spring's memory footprint
+  - M-D: Efferent coupling (Ce) via PMD — measures class-level coupling reduction
+  - M-E: Spring ApplicationContext instantiation count (expected: 2 pre, 0 post)
+  - M-F: Test method count and test-to-production LOC ratio
+- Complete collection shell script outline covering all metrics in one pass
+
+**Section 5 — Statistical Rigor:** Recommended upgrading from 3 to 5 timing runs; reporting min/median/max/stdev; avoiding background load during collection.
+
+**Section 6 — Environment Specification:** Metadata checklist (OS, CPU, RAM, JVM, Maven, Gradle, cloc, PMD, date, git SHA) to ensure pre- and post-refactor measurements are comparable.
+
+**Section 7 — Analysis Plan:** Comparison table template with absolute-change and percentage-change columns; 4 identified validity threats (test validity, coverage validity, measurement confounds, JVM warm-up).
+
+**Section 8 — Open Questions:** 6 decisions flagged for review (fat JAR strategy, heap profiling depth, T-04 scope, run count upgrade to 5, promotion of M-D to formal FR-23, T-09 N parameter).
