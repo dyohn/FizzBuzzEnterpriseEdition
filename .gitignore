@@ -178,3 +178,10 @@ pip-log.txt
 
 .class
 target/
+
+#############
+## Gradle
+#############
+
+.gradle/
+build/
