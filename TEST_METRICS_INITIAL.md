@@ -1,7 +1,7 @@
 # Testing and Metrics Plan — FizzBuzzEnterpriseEdition Refactor Experiment
 **Document ID:** TEST_METRICS_INITIAL
 **Branch:** `ai-refactor-experiment`
-**Status:** Draft — initial version for review
+**Status:** Updated — all tests implemented; T-11 added for FR-02
 **Sources:** REQUIREMENTS_REFINED_1.md, PLAN_REVISED_1.md
 
 ---
@@ -61,7 +61,7 @@ Each requirement is assigned one or more of the following verification methods:
 | Req. ID | Brief Description | Verification Methods | Notes |
 |---------|-------------------|----------------------|-------|
 | FR-01 | Exactly N entries for `fizzBuzz(N)` | JUnit-E, JUnit-N | Oracle tests implicitly validate; add explicit cardinality assertion (see §3.2) |
-| FR-02 | Ascending order i=1..N | JUnit-E, JUnit-N | Oracle tests implicitly validate correct ordering; add explicit ordering test |
+| FR-02 | Ascending order i=1..N | JUnit-E, JUnit-N | Oracle tests implicitly validate correct ordering; explicit ordering test added as T-11 |
 | FR-03 | Fizz for i%3==0 && i%5!=0 | JUnit-E | Oracle: N=3 → "Fizz\n", N=6 → "Fizz\n", etc. |
 | FR-04 | Buzz for i%5==0 && i%3!=0 | JUnit-E | Oracle: N=5 → "Buzz\n", N=10 → "Buzz\n" |
 | FR-05 | FizzBuzz for i%3==0 && i%5==0 | JUnit-E | Oracle: N=15 → output contains "FizzBuzz\n" as 15th line |
@@ -118,13 +118,19 @@ Each requirement is assigned one or more of the following verification methods:
 
 ### 3.1 Existing Tests (Retained)
 
-`FizzBuzzTest.java` contains `testFizzBuzz()`, which iterates N from 1 to 16, calls `fizzBuzz(N)` with System.out redirected to a `ByteArrayOutputStream`, and compares the captured output to oracle strings in `TestConstants.java`. This test will be **rewritten** during Phase 2 of the refactor (to remove Spring bootstrapping) but will retain the same 16-case oracle validation structure and the `System.setOut()` capture mechanism.
+`FizzBuzzTest.java` contains `testFizzBuzz()` (T-00), which iterates N from 1 to 16, calls `fizzBuzz(N)` with System.out redirected to a `ByteArrayOutputStream`, and compares the captured output to oracle strings in `TestConstants.java`. This test will be **rewritten** during Phase 2 of the refactor (to remove Spring bootstrapping) but will retain the same 16-case oracle validation structure and the `System.setOut()` capture mechanism.
 
-The existing test implicitly validates: FR-03 through FR-06 (output rules), FR-12 (oracle conformance), SR-03 (System.out at call time), SR-06 (implicitly deterministic), SR-09 (charset round-trip), and NFR-05 (16 cases).
+The oracle test (T-00) implicitly validates: FR-03 through FR-06 (output rules), FR-12 (oracle conformance), SR-03 (System.out at call time), SR-06 (implicitly deterministic), SR-09 (charset round-trip), and NFR-05 (16 cases).
 
-### 3.2 New Tests Required
+**Implementation status:** All tests (T-00 through T-11) are written and passing in `src/test/java/FizzBuzzTest.java`. The test class has been updated with:
+- `originalErr` field added alongside `originalOut`
+- `tearDown()` extended to restore both `System.out` and `System.err`
+- `captureOutput(int n)` private helper extracted and shared across all new tests
+- 12 test methods total (T-00 through T-11); all 12 pass (`mvn test`: 12/12, 0 failures)
 
-The following new test methods should be added to `FizzBuzzTest.java` (or a companion class). Each is mapped to the requirement(s) it verifies.
+### 3.2 New Tests
+
+The following test methods have been added to `FizzBuzzTest.java`. Each is mapped to the requirement(s) it verifies. All are implemented and passing.
 
 ---
 
@@ -320,13 +326,35 @@ Verifies: SR-05 (partial — covers System.err; filesystem/network/threads requi
 
 ---
 
+**T-11 — Output Ordering (FR-02)**
+```java
+@Test
+public void testOutputOrdering() {
+    final String sep = System.getProperty("line.separator");
+    final String[] lines = captureOutput(16).split(sep, -1);
+    final String[] expected = {
+        "1", "2", "Fizz", "4", "Buzz", "Fizz", "7", "8",
+        "Fizz", "Buzz", "11", "Fizz", "13", "14", "FizzBuzz", "16"
+    };
+    for (int i = 0; i < expected.length; i++) {
+        assertEquals("Entry at position " + (i + 1) + " must match ordered sequence",
+                expected[i], lines[i]);
+    }
+}
+```
+Verifies: FR-02
+> *Note: The oracle test (T-00) implicitly validates ordering via full string matching. T-11 makes the ordering assertion explicit and independent of the `TestConstants` oracle strings. This test was added after identifying a gap: FR-02 was listed as requiring a JUnit-N test in the validation matrix (§2.2) but no T-xx had been assigned to it in the original plan.*
+
+---
+
 ### 3.3 Test Design Notes
 
-- **Helper method `captureOutput(int n)`** — all new tests should share a private helper that redirects `System.out`, calls `fizzBuzz(n)`, flushes, restores `System.out`, and returns the captured string. This avoids duplication across test methods.
-- **`@Before` / `@After`** — the existing teardown pattern (restoring `System.out` via `@After`) should be extended to restore `System.err` as well, given T-10.
-- **T-04 (line separator)** — this test mutates a JVM system property; it must restore the original value in a `finally` block to avoid contaminating other tests. Test ordering dependencies should be assumed absent.
-- **T-07 (IOException suppression)** — this test cannot verify the pre-refactor codebase in isolation because the exception suppression is buried inside the adapter chain. It primarily validates the post-refactor implementation. For pre-refactor, the mechanism is verified by static inspection of `FizzBuzzOutputStrategyToFizzBuzzExceptionSafeOutputStrategyAdapter`.
-- **T-04 and T-09 conflict awareness** — T-04 changes `line.separator`; T-09 calls `fizzBuzz(100)` which is expensive (1 second+ in pre-refactor). These should be isolated and clearly documented.
+- **Helper method `captureOutput(int n)`** — implemented as a private helper in `FizzBuzzTest.java`. Redirects `System.out` to a `ByteArrayOutputStream`, calls `fizzBuzz(n)`, flushes, restores `System.out` to `originalOut`, and returns the captured string. Shared across T-01 through T-06, T-09, T-10, T-11.
+- **`@Before` / `@After`** — `setUp()` now saves both `System.out` and `System.err` to `originalOut` and `originalErr` fields. `tearDown()` restores both. This accommodates T-10 which captures `System.err`.
+- **T-04 (line separator)** — mutates `line.separator` system property; restores original in a `finally` block. `NewLineStringReturner.getReturnString()` reads the property at call time (confirmed by source inspection), so this test is valid for the pre-refactor system.
+- **T-07 (IOException suppression)** — `PrintStream` (which `System.out` is) internally catches `IOException` from its underlying stream and sets an error flag rather than propagating it. This means T-07 may pass trivially in both systems via PrintStream's own suppression rather than the application's adapter. It remains a valid regression guard that no unchecked exception escapes `fizzBuzz()`. For pre-refactor, the architectural mechanism is additionally verified by static inspection of `FizzBuzzOutputStrategyToFizzBuzzExceptionSafeOutputStrategyAdapter`.
+- **T-09 performance** — calls `fizzBuzz(100)`, which in the pre-refactor system involves two Spring context bootstraps. This is the most expensive test at ~1 second per call. It is retained at N=100 for complete arithmetic coverage (see OQ-6).
+- **T-11 (ordering)** — added to close the FR-02 gap identified during test audit. Independent of oracle string constants in `TestConstants`.
 
 ---
 
@@ -638,7 +666,20 @@ The following items require decision before finalizing this plan:
 |---|----------|--------|
 | OQ-1 | Should the JAR be built as a fat JAR (all dependencies bundled) for both pre- and post-refactor? If yes, M-A captures the full dependency footprint; if no, JAR size only reflects production source. | M-A methodology |
 | OQ-2 | For M-C (heap usage), is `verbose:gc` log parsing sufficient, or should a profiler (e.g., JFR, VisualVM) be used? The latter is more accurate but adds setup complexity. | M-C collection |
-| OQ-3 | Should T-04 (line separator test) be included in both pre- and post-refactor test suites? The pre-refactor system uses `NewLineStringReturner` which reads `System.getProperty("line.separator")` — the test should pass there too. | T-04 scope |
+| OQ-3 | ~~Should T-04 (line separator test) be included in both pre- and post-refactor test suites?~~ **Resolved:** T-04 is included. `NewLineStringReturner.getReturnString()` confirmed (by source inspection) to read `System.getProperty("line.separator")` at call time, not at Spring bean construction time. T-04 passes in the pre-refactor system. | T-04 scope |
 | OQ-4 | Should FR-17/FR-18 be upgraded from 3 runs to 5 runs to match the statistical rigor recommendation in §5? This would require a minor update to `REQUIREMENTS_REFINED_1.md`. | FR-17, FR-18 |
 | OQ-5 | Should M-D (efferent coupling via PMD) be promoted to a formal requirement (FR-23), given its direct relevance to measuring coupling reduction? | Requirements scope |
 | OQ-6 | The T-09 test calls `fizzBuzz(100)`. In the pre-refactor system, this involves two Spring context bootstraps per test run. Should a lower N (e.g., 30) be used to limit the runtime cost of this test? | T-09 parameter |
+
+---
+
+## 9. Change Log
+
+| Date | Change | Reason |
+|------|--------|--------|
+| 2026-04-21 | Updated document status from "Draft — initial version for review" to "Updated — all tests implemented; T-11 added for FR-02" | Tests written to disk |
+| 2026-04-21 | §2.2 FR-02 row: noted T-11 closes the explicit ordering test gap | FR-02 audit finding |
+| 2026-04-21 | §3.1: Added implementation status block — 12 tests passing, helper and setUp/tearDown changes documented | Tests implemented |
+| 2026-04-21 | §3.2: Changed section heading from "New Tests Required" to "New Tests"; added T-11 entry | T-11 implemented |
+| 2026-04-21 | §3.3: Updated all design notes to reflect implemented state; added confirmed findings (T-04 call-time read, T-07 PrintStream behavior, T-11 gap closure) | Implementation completed |
+| 2026-04-21 | §8 OQ-3: Marked resolved — T-04 confirmed valid for pre-refactor by source inspection of `NewLineStringReturner` | Source inspection |
