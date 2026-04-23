@@ -1,0 +1,8 @@
+[INFO]    javax.annotation:javax.annotation-api:jar:1.3.2:compile -- module java.annotation [auto]
+[INFO]    org.springframework:spring-aop:jar:3.2.13.RELEASE:compile -- module spring.aop (auto)
+[INFO]    aopalliance:aopalliance:jar:1.0:compile -- module aopalliance (auto)
+[INFO]    org.springframework:spring-beans:jar:3.2.13.RELEASE:compile -- module spring.beans (auto)
+[INFO]    org.springframework:spring-context:jar:3.2.13.RELEASE:compile -- module spring.context (auto)
+[INFO]    org.springframework:spring-core:jar:3.2.13.RELEASE:compile -- module spring.core (auto)
+[INFO]    commons-logging:commons-logging:jar:1.1.3:compile -- module commons.logging (auto)
+[INFO]    org.springframework:spring-expression:jar:3.2.13.RELEASE:compile -- module spring.expression (auto)
