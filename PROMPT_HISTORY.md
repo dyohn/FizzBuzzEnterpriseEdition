@@ -366,3 +366,106 @@ Created `TEST_METRICS_INITIAL.md` containing:
 **Section 7 — Analysis Plan:** Comparison table template with absolute-change and percentage-change columns; 4 identified validity threats (test validity, coverage validity, measurement confounds, JVM warm-up).
 
 **Section 8 — Open Questions:** 6 decisions flagged for review (fat JAR strategy, heap profiling depth, T-04 scope, run count upgrade to 5, promotion of M-D to formal FR-23, T-09 N parameter).
+
+---
+
+## Exchange 17
+
+### User
+> I think the plan in TEST_METRICS_INITIAL.md is solid. I want to incorporate all of your suggestions into the official plan. That includes the proposed new tests and the test/metric driver script. Read TEST_METRICS_INITIAL.md, REQUIREMENTS_REFINED_1.md, and PLAN_REVISED_1.md, and create a new file named PLAN_REVISED_2.md that incorporates all the refined decisions into the most recent version of the refactor experiment plan.
+
+### Assistant
+Read `TEST_METRICS_INITIAL.md`, `REQUIREMENTS_REFINED_1.md`, and `PLAN_REVISED_1.md` in full.
+
+Created `PLAN_REVISED_2.md` (supersedes `PLAN_REVISED_1.md`) containing:
+
+**Phase 0 — Environment Setup & Pre-Flight:**
+- Added Step 0.7: verify python3 is available (required by collection script for JaCoCo/PMD XML parsing).
+- Added Step 0.8: create and commit `scripts/collect_metrics.sh` (Appendix C).
+- PMD plugin configuration updated to include `CouplingBetweenObjects` rule alongside cyclomatic complexity, enabling M-D (efferent coupling) collection.
+
+**Phase 1 — Pre-Refactor Metrics Collection (16 steps):**
+- Timing steps upgraded from 3 to 5 runs; report min/median/max/stdev.
+- Steps 1.10–1.15 added for proposed metrics M-A through M-F:
+  - M-A: JAR artifact size via `wc -c`
+  - M-B: Application execution time via `time java -jar` (5 runs)
+  - M-C: Peak heap usage via `-Xlog:gc*` JVM flags
+  - M-D: Efferent coupling (Ce) via PMD XML report
+  - M-E: Spring ApplicationContext instantiation count (grep or JVM agent)
+  - M-F: Test method count and test-to-production LOC ratio
+
+**Phase 2 — Refactor Implementation:**
+- `FizzBuzzTest.java` (Appendix D) extended from oracle-only to 11 test methods:
+  - T-00: Oracle (existing 1–16 correctness, preserved)
+  - T-01 through T-10: All new tests from TEST_METRICS_INITIAL.md §3
+- `setUp`/`tearDown` extended to save/restore both `System.out` and `System.err`.
+- `captureOutput()` helper extracted to eliminate duplication across test methods.
+
+**Phase 3 — Post-Refactor Metrics Collection (17 steps):**
+- Mirror of Phase 1 steps with post-refactor label; same 5-run timing and M-A through M-F steps.
+
+**Phase 4 — Analysis & Reporting:** Unchanged from PLAN_REVISED_1.
+
+**Appendix A — Measurement Record Template:** Updated with 5-run timing tables (min/median/max/stdev columns) and M-A through M-F sections.
+
+**Appendix B — Comparison Table:** Expanded from 13 to 19 rows to include all new metrics.
+
+**Appendix C (NEW) — `scripts/collect_metrics.sh`:** Complete bash script automating collection of all FR-14–FR-22 and M-A through M-F metrics; writes output to `measurements/metrics_<LABEL>.md`. Includes python3-based JaCoCo XML and PMD XML parsing, 5-run timing loops, and environment metadata capture.
+
+**Appendix D (NEW) — `FizzBuzzTest.java`:** Complete Java source for the post-refactor test class with all 11 test methods, `captureOutput()` helper, and extended `setUp`/`tearDown`.
+
+---
+
+## Exchange 18
+
+### User
+> Update PROMPT_HISTORY.md with a summary of our last interaction.
+
+### Assistant
+Read `PROMPT_HISTORY.md` to find the current end of the log (Exchange 16). Appended Exchange 17 (PLAN_REVISED_2.md creation) and this Exchange 18 entry.
+
+---
+
+## Exchange 19
+
+### User
+> Re-read PLAN_REVISED_2.md and any related/mentioned files/folders. We are looking for any work that has already been completed and can be skipped during the experiment plan.
+
+### Assistant
+Read `PLAN_REVISED_2.md` in full, then audited the current repository state against every Phase 0 step. Key findings:
+
+**Already complete (Phase 0):**
+- Step 0.2: cloc 2.08, python3 3.13.9, stat present
+- Step 0.3: Maven build passes (with modernization applied to pom.xml and build.gradle)
+- Step 0.4: Gradle build passes (jcenter→mavenCentral, gradle 2.8→6.9.4, sourceCompatibility added)
+- Step 0.5: Tests pass — **12 tests** (T-00 through T-11), not the plan's expected 1
+- Step 0.6: PMD plugin (3.21.0) added to pom.xml with both rules
+- Step 0.7: `mvn pmd:pmd` verified; `target/pmd.xml` produced
+
+**Still needed (Phase 0):**
+- Step 0.8: `scripts/collect_metrics.sh` — `scripts/` directory does not exist
+- Step 0.9: `measurements/` directory and `phase_00_environment.md` — neither exists
+- Step 0.10: Commit
+
+**Phase 2 deviation identified:** Plan says Step 2.3 replaces `FizzBuzzTest.java` using Appendix D (T-00 through T-10, 11 tests). Current test file already has T-00 through T-11 (12 tests). Appendix D is now outdated — Step 2.3 should adapt the current file (strip Spring, change `this.fb.fizzBuzz(n)` to `FizzBuzz.fizzBuzz(n)`) rather than use Appendix D. Phase 2 exit check "11 tests" updated to "12 tests".
+
+**Also noted:** `PLAN_REVISED_2.md` and `PROMPT_HISTORY.md` were uncommitted — should be committed as part of Phase 0 Step 0.10.
+
+---
+
+## Exchange 20
+
+### User
+> Update PLAN_REVISED_2.md and PROMPT_HISTORY.md to reflect the double-checking you just did.
+
+### Assistant
+Updated `PLAN_REVISED_2.md`:
+- Status line changed to "Approved — Phase 0 partially complete; ready for execution"
+- Steps 0.2 through 0.7 marked `✅ COMPLETE` with dates and notes on what was done
+- Step 0.5 deviation documented (12 tests, not 1; T-11 addition explained)
+- Exit verification checkboxes ticked for completed items
+- Phase 2 Step 2.3 rewritten to warn against using Appendix D; describes correct adaptation approach
+- Phase 2 Step 2.9 expected count updated 11→12 with rationale
+- Phase 2 exit verification "11 tests" updated to "12 tests"
+
+Appended Exchange 19 and Exchange 20 to `PROMPT_HISTORY.md`.
