@@ -12,14 +12,11 @@ import java.io.PrintStream;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
 
-import com.seriouscompany.business.java.fizzbuzz.packagenamingpackage.interfaces.FizzBuzz;
+import com.seriouscompany.business.java.fizzbuzz.packagenamingpackage.impl.FizzBuzz;
 
 /**
- * Tests for FizzBuzz — pre-refactor (Spring-based) implementation.
+ * Tests for FizzBuzz — post-refactor (single-class) implementation.
  *
  * Test inventory:
  *   T-00  testFizzBuzz                    — Oracle conformance N=1..16 (FR-03–FR-06, FR-12, NFR-05)
@@ -39,15 +36,11 @@ public class FizzBuzzTest {
 
     private PrintStream originalOut;
     private PrintStream originalErr;
-    private FizzBuzz fb;
 
     @Before
     public void setUp() {
-        final ApplicationContext context = new ClassPathXmlApplicationContext(TestConstants.SPRING_XML);
-        this.fb = (FizzBuzz) context.getBean(TestConstants.STANDARD_FIZZ_BUZZ);
         this.originalOut = System.out;
         this.originalErr = System.err;
-        ((ConfigurableApplicationContext) context).close();
     }
 
     @After
@@ -64,7 +57,7 @@ public class FizzBuzzTest {
     private String captureOutput(final int n) {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         System.setOut(new PrintStream(baos));
-        this.fb.fizzBuzz(n);
+        FizzBuzz.fizzBuzz(n);
         System.out.flush();
         System.setOut(this.originalOut);
         return baos.toString();
@@ -78,7 +71,7 @@ public class FizzBuzzTest {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         final BufferedOutputStream bos = new BufferedOutputStream(baos);
         System.setOut(new PrintStream(bos));
-        this.fb.fizzBuzz(n);
+        FizzBuzz.fizzBuzz(n);
         System.out.flush();
         final String platformDependentExpectedResult =
                 s.replaceAll("\\n", System.getProperty("line.separator"));
@@ -159,10 +152,6 @@ public class FizzBuzzTest {
     // -------------------------------------------------------------------------
     // T-04: Line separator is read from System property, not hardcoded
     // Verifies: FR-08
-    //
-    // Note: NewLineStringReturner.getReturnString() reads System.getProperty("line.separator")
-    // at call time (not cached at Spring bean construction time), so this test is valid
-    // for the pre-refactor system.
     // -------------------------------------------------------------------------
 
     @Test
@@ -219,12 +208,10 @@ public class FizzBuzzTest {
     // T-07: IOException from the output stream does not propagate out of fizzBuzz
     // Verifies: SR-01, SR-07
     //
-    // Note: In the pre-refactor system, exception suppression is provided by
-    // FizzBuzzOutputStrategyToFizzBuzzExceptionSafeOutputStrategyAdapter.
-    // PrintStream also silently catches IOExceptions from its underlying stream
-    // and sets an internal error flag instead of propagating them, so this test
-    // may pass trivially in both systems. It remains a valid regression guard
-    // that no unchecked exception escapes fizzBuzz().
+    // Note: PrintStream also silently catches IOExceptions from its underlying
+    // stream and sets an internal error flag instead of propagating them, so this
+    // test may pass trivially. It remains a valid regression guard that no
+    // unchecked exception escapes fizzBuzz().
     // -------------------------------------------------------------------------
 
     @Test
@@ -241,7 +228,7 @@ public class FizzBuzzTest {
         });
         System.setOut(throwingStream);
         try {
-            this.fb.fizzBuzz(5);
+            FizzBuzz.fizzBuzz(5);
         } catch (final Throwable t) {
             fail("fizzBuzz() must suppress IOException and not propagate it; instead threw: " + t);
         } finally {
@@ -266,7 +253,7 @@ public class FizzBuzzTest {
             }
         };
         System.setOut(countingStream);
-        this.fb.fizzBuzz(10);
+        FizzBuzz.fizzBuzz(10);
         System.setOut(this.originalOut);
         assertTrue("Expected at least 10 flush() calls for fizzBuzz(10), got: " + flushCount[0],
                 flushCount[0] >= 10);
