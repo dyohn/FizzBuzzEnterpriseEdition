@@ -2,7 +2,7 @@
 **Document ID:** PLAN_REVISED_2
 **Supersedes:** PLAN_REVISED_1
 **Branch:** `ai-refactor-experiment`
-**Status:** Phase 0 COMPLETE — Phase 1 ready to begin
+**Status:** Phase 1 COMPLETE — Phase 2 ready to begin
 **Requirements Reference:** REQUIREMENTS_REFINED_1.md
 **Testing Reference:** TEST_METRICS_INITIAL.md (incorporated in full)
 
@@ -515,11 +515,11 @@ git commit -m "Phase 1: Record pre-refactor baseline measurements"
 
 ### Exit Verification
 
-- [ ] All metrics FR-13 through FR-22 recorded in `measurements/phase_01_baseline.md`
-- [ ] All metrics M-A through M-F recorded in `measurements/phase_01_baseline.md`
-- [ ] 5 timing runs recorded for FR-17, FR-18, M-B; min/median/max/stdev computed
-- [ ] `measurements/baseline_pmd.xml`, `baseline_jacoco.xml`, `baseline_cloc_summary.txt` committed
-- [ ] Artifact committed on `ai-refactor-experiment`
+- [x] All metrics FR-13 through FR-22 recorded in `measurements/phase_01_baseline.md` — commit 69c00e4
+- [x] All metrics M-A through M-F recorded in `measurements/phase_01_baseline.md` — commit 69c00e4
+- [x] 5 timing runs recorded for FR-17, FR-18, M-B; min/median/max/stdev computed — all stdev < 5%
+- [x] `measurements/baseline_pmd.xml`, `baseline_jacoco.xml`, `baseline_cloc_summary.txt` committed — commit 69c00e4
+- [x] Artifact committed on `ai-refactor-experiment` — commit 69c00e4 (2026-04-22)
 
 ---
 
