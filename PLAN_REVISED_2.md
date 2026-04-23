@@ -2,7 +2,7 @@
 **Document ID:** PLAN_REVISED_2
 **Supersedes:** PLAN_REVISED_1
 **Branch:** `ai-refactor-experiment`
-**Status:** Approved — Phase 0 partially complete; ready for execution
+**Status:** Phase 0 COMPLETE — Phase 1 ready to begin
 **Requirements Reference:** REQUIREMENTS_REFINED_1.md
 **Testing Reference:** TEST_METRICS_INITIAL.md (incorporated in full)
 
@@ -213,8 +213,8 @@ git commit -m "Phase 0: Add PMD/coupling tooling, collection script, record envi
 - [x] `mvn pmd:pmd` succeeds and produces `target/pmd.xml` (2026-04-21)
 - [x] `cloc --version` outputs a version string — cloc 2.08 (2026-04-21)
 - [x] `python3 --version` outputs a version string — Python 3.13.9 (2026-04-21)
-- [ ] `scripts/collect_metrics.sh` is executable and committed
-- [ ] `measurements/phase_00_environment.md` is committed
+- [x] `scripts/collect_metrics.sh` is executable and committed — commit 99653c6 (2026-04-22)
+- [x] `measurements/phase_00_environment.md` is committed — commit 99653c6 (2026-04-22)
 
 ---
 
